@@ -1,4 +1,4 @@
-import torch
+import os
 import torch.optim as optim
 from torch.utils.data import DataLoader
 import pandas as pd
@@ -83,16 +83,22 @@ def run_experiments(
     return df_results
 
 
+
+
 def plot_results(results_df: pd.DataFrame, feature_engineering: bool) -> None:
     """
-    Построение графиков зависимости val_accuracy от batch_size, learning_rate и optimizer
+    Построение графиков зависимости val_accuracy от batch_size, learning_rate и optimizer.
+
     :param results_df: датафрейм с результатами
+    :param feature_engineering: флаг, использовалась ли обработка признаков
     :return: None
     """
-    prefix = ""
-    if feature_engineering:
-        prefix = "feature_engineering_"
+    save_dir = "plots"
+    os.makedirs(save_dir, exist_ok=True)
 
+    prefix = "feature_engineering_" if feature_engineering else ""
+
+    # Accuracy vs Batch Size
     grp_bs = results_df.groupby('batch_size')['val_accuracy'].mean().reset_index()
     plt.figure(figsize=(8, 5))
     plt.plot(grp_bs['batch_size'], grp_bs['val_accuracy'], marker='o')
@@ -101,9 +107,10 @@ def plot_results(results_df: pd.DataFrame, feature_engineering: bool) -> None:
     plt.ylabel('Val Accuracy')
     plt.grid(True)
     plt.tight_layout()
-    plt.savefig(f'{prefix}val_acc_vs_batch_size.png')
+    plt.savefig(os.path.join(save_dir, f'{prefix}val_acc_vs_batch_size.png'))
     plt.close()
 
+    # Accuracy vs Optimizer
     grp_opt = results_df.groupby('optimizer')['val_accuracy'].mean().reset_index()
     plt.figure(figsize=(8, 5))
     plt.bar(grp_opt['optimizer'], grp_opt['val_accuracy'])
@@ -111,9 +118,10 @@ def plot_results(results_df: pd.DataFrame, feature_engineering: bool) -> None:
     plt.xlabel('Optimizer')
     plt.ylabel('Val Accuracy')
     plt.tight_layout()
-    plt.savefig(f'{prefix}val_acc_vs_opt.png')
+    plt.savefig(os.path.join(save_dir, f'{prefix}val_acc_vs_optimizer.png'))
     plt.close()
 
+    # Accuracy vs Learning Rate
     grp_lr = results_df.groupby('learning_rate')['val_accuracy'].mean().reset_index()
     plt.figure(figsize=(8, 5))
     plt.plot(grp_lr['learning_rate'], grp_lr['val_accuracy'], marker='o')
@@ -123,11 +131,12 @@ def plot_results(results_df: pd.DataFrame, feature_engineering: bool) -> None:
     plt.ylabel('Val Accuracy')
     plt.grid(True)
     plt.tight_layout()
-    plt.savefig(f'{prefix}val_acc_vs_lr.png')
+    plt.savefig(os.path.join(save_dir, f'{prefix}val_acc_vs_learning_rate.png'))
     plt.close()
 
+
 if __name__ == '__main__':
-    df = run_experiments(csv_path='datasets/iris.csv', feature_engineering=True, epochs=10)
-    plot_results(df, feature_engineering=True)
+    df = run_experiments(csv_path='datasets/iris.csv', feature_engineering=False, epochs=10)
+    plot_results(df, feature_engineering=False)
 
     print(df)
